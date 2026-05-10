@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LOOPS</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:     #0a0a0a;
+      --text:   #e8e4dc;
+      --muted:  rgba(232,228,220,0.45);
+      --accent: #c8b89a;
+      --wrong:  #c0604a;
+      --border: rgba(255,255,255,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #intro {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 40px;
+      text-align: center;
+      z-index: 100;
+    }
+
+    .intro-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(72px, 16vw, 140px);
+      letter-spacing: -3px;
+      line-height: 1;
+      animation: fadeUp 1s ease both;
+    }
+
+    .intro-sub {
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      animation: fadeUp 1s ease 0.2s both;
+    }
+
+    .intro-btn {
+      padding: 13px 44px;
+      background: transparent;
+      border: 0.5px solid var(--accent);
+      color: var(--accent);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: background 0.3s, color 0.3s;
+      animation: fadeUp 1s ease 0.5s both;
+    }
+    .intro-btn:hover { background: var(--accent); color: var(--bg); }
+
+    #player-wrap {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      padding: 14px 28px;
+      border-bottom: 0.5px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .topbar-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 18px;
+      font-style: italic;
+    }
+
+    #video-container {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+
+    #video-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: #0d0d0d;
+    }
+
+    .play-icon {
+      width: 56px;
+      height: 56px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .play-icon svg { width: 20px; height: 20px; fill: rgba(255,255,255,0.2); margin-left: 3px; }
+
+    #main-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    #paused-ind {
+      position: absolute;
+      top: 16px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.4s;
+      pointer-events: none;
+      z-index: 15;
+    }
+    #paused-ind.visible { opacity: 1; }
+
+    .paused-pill {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      background: rgba(0,0,0,0.75);
+      padding: 5px 16px;
+      border-radius: 20px;
+      border: 0.5px solid rgba(255,255,255,0.1);
+    }
+
+    #choice-ui {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 20px 28px 32px;
+      background: linear-gradient(to top, rgba(0,0,0,0.97) 0%, rgba(0,0,0,0.65) 55%, transparent 100%);
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 10;
+    }
+    #choice-ui.visible { display: flex; }
+
+    .countdown-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .countdown-label {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+    }
+    #cd-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: var(--text);
+      min-width: 20px;
+      text-align: center;
+      transition: color 0.3s;
+    }
+    #cd-num.urgent { color: var(--wrong); }
+
+    .progress-track {
+      height: 1px;
+      background: rgba(255,255,255,0.1);
+      overflow: hidden;
+      max-width: 700px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    #prog-fill {
+      height: 100%;
+      background: rgba(200,184,154,0.5);
+      transform-origin: left;
+    }
+
+    .choice-btns {
+      display: flex;
+      gap: 10px;
+      max-width: 700px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .choice-btn {
+      flex: 1;
+      padding: 13px 16px;
+      background: rgba(255,255,255,0.05);
+      border: 0.5px solid rgba(255,255,255,0.15);
+      border-radius: 4px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.2s, border-color 0.2s;
+      line-height: 1.4;
+    }
+    .choice-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); }
+
+    .btn-main { font-weight: 500; font-size: 14px; margin-bottom: 3px; }
+    .btn-sub  { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+    #ending-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 48px 40px;
+      gap: 22px;
+      z-index: 50;
+    }
+
+    .ending-eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .ending-headline {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(22px, 4.5vw, 40px);
+      line-height: 1.3;
+      max-width: 560px;
+    }
+    .ending-headline em { font-style: italic; color: var(--accent); }
+
+    .ending-body {
+      font-size: 14px;
+      color: var(--muted);
+      max-width: 420px;
+      line-height: 1.8;
+    }
+
+    .restart-btn {
+      margin-top: 8px;
+      padding: 12px 36px;
+      background: transparent;
+      border: 0.5px solid rgba(255,255,255,0.15);
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: border-color 0.3s, color 0.3s;
+    }
+    .restart-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="intro">
+    <div class="intro-title">LOOPS</div>
+    <div class="intro-sub">An interactive short film created by Sonia Ram</div>
+    <button class="intro-btn" onclick="startFilm()">Begin</button>
+  </div>
+
+  <div id="player-wrap">
+    <div class="topbar">
+      <div class="topbar-title">LOOPS</div>
+    </div>
+    <div id="video-container">
+      <div id="video-placeholder">
+        <div class="play-icon">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+      </div>
+      <video id="main-video" playsinline></video>
+      <div id="paused-ind">
+        <div class="paused-pill">Paused — make a choice</div>
+      </div>
+      <div id="choice-ui">
+        <div class="countdown-row">
+          <span class="countdown-label">Make a decision</span>
+          <span id="cd-num">3</span>
+        </div>
+        <div class="progress-track">
+          <div id="prog-fill"></div>
+        </div>
+        <div class="choice-btns" id="choice-btns"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="ending-screen">
+    <div class="ending-eyebrow" id="end-eyebrow"></div>
+    <div class="ending-headline" id="end-headline"></div>
+    <div class="ending-body" id="end-body"></div>
+    <button class="restart-btn" onclick="restartFilm()">Watch again</button>
+  </div>
+
+  <script>
+    // Chat Log: https://chatgpt.com/share/69fad28e-2b1c-83e8-a58d-4380dd4f038b
+    const SEGMENTS = {
+
+      A: {
+        videoSrc: 'videos/sequence1.mp4',
+        choices: [
+          { text: 'Keep watching',  sub: "just one more video, it's useful",  type: 'wrong', next: 'B1' },
+          { text: 'Get up',         sub: 'I should start getting ready',       type: 'right', next: 'B2' }
+        ]
+      },
+
+      B1: {
+        videoSrc: 'videos/b1.mp4',
+        choices: [
+          { text: 'Prepare a little more', sub: "I still have time",                    type: 'wrong', next: 'B3' },
+          { text: 'Pick an outfit',        sub: 'I should start getting ready now',     type: 'right', next: 'B4' }
+        ]
+      },
+
+      B2: {
+        videoSrc: 'videos/b2.mp4',
+        choices: [
+          { text: 'Keep researching',   sub: 'I just need the right look first', type: 'wrong', next: 'B3' },
+          { text: 'Start getting ready', sub: 'with what I already have',        type: 'right', next: 'B4' }
+        ]
+      },
+
+      B3: {
+        videoSrc: 'videos/b3.mp4',
+        choices: [
+          { text: 'Pick an outfit from what I have', sub: 'just go with something', type: 'right', next: 'B4' }
+        ]
+      },
+
+      B4: {
+        videoSrc: 'videos/b4.mp4',
+        choices: [
+          { text: 'Cancel on Aaliyah', sub: "I'm just not ready for this", type: 'wrong', next: 'E1' },
+          { text: 'Push through',      sub: "good enough, let's go",       type: 'right', next: 'E2' }
+        ]
+      },
+
+      E1: {
+        videoSrc: 'videos/bad-ending.mp4',
+        ending: 'bad'
+      },
+
+      E2: {
+        videoSrc: 'videos/good-ending.mp4',
+        ending: 'good'
+      }
+
+    };
+
+    let current  = null;
+    let cdTimer  = null;
+    let cdVal    = 3;
+
+    function startFilm() {
+      document.getElementById('intro').style.display = 'none';
+      document.getElementById('player-wrap').style.display = 'flex';
+      loadSegment('A');
+    }
+
+    function loadSegment(id) {
+      clearChoiceUI();
+      current = SEGMENTS[id];
+      document.getElementById('paused-ind').classList.remove('visible');
+
+      const vid = document.getElementById('main-video');
+      vid.src = current.videoSrc;
+      vid.style.display = 'block';
+      document.getElementById('video-placeholder').style.display = 'none';
+      vid.play();
+      vid.onended = () => onSegmentEnd();
+    }
+
+    function onSegmentEnd() {
+      if (current.ending) {
+        showEnding(current.ending);
+      } else if (current.choices) {
+        showChoices(current.choices);
+      }
+    }
+
+    function showChoices(choices) {
+      const btns = document.getElementById('choice-btns');
+      btns.innerHTML = '';
+
+      const shuffled = Math.random() > 0.5 ? [...choices] : [...choices].reverse();
+
+      shuffled.forEach(choice => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.innerHTML = `
+          <div class="btn-main">${choice.text}</div>
+          <div class="btn-sub">${choice.sub}</div>
+        `;
+        btn.onclick = () => pickChoice(choice);
+        btns.appendChild(btn);
+      });
+
+      document.getElementById('choice-ui').classList.add('visible');
+      startCountdown();
+    }
+
+    function startCountdown() {
+      cdVal = 3;
+      const num  = document.getElementById('cd-num');
+      const fill = document.getElementById('prog-fill');
+
+      num.textContent = cdVal;
+      num.classList.remove('urgent');
+
+      fill.style.transition = 'none';
+      fill.style.transform  = 'scaleX(1)';
+      setTimeout(() => {
+        fill.style.transition = 'transform 3s linear';
+        fill.style.transform  = 'scaleX(0)';
+      }, 50);
+
+      cdTimer = setInterval(() => {
+        cdVal--;
+        num.textContent = cdVal;
+        if (cdVal <= 1) num.classList.add('urgent');
+        if (cdVal <= 0) {
+          clearInterval(cdTimer);
+          pauseFilm();
+        }
+      }, 1000);
+    }
+
+    function pauseFilm() {
+      const vid = document.getElementById('main-video');
+      vid.pause();
+      document.getElementById('paused-ind').classList.add('visible');
+      document.getElementById('cd-num').textContent = '—';
+    }
+
+    function pickChoice(choice) {
+      clearInterval(cdTimer);
+      clearChoiceUI();
+      document.getElementById('paused-ind').classList.remove('visible');
+      loadSegment(choice.next);
+    }
+
+    function clearChoiceUI() {
+      clearInterval(cdTimer);
+      document.getElementById('choice-ui').classList.remove('visible');
+      document.getElementById('choice-btns').innerHTML = '';
+    }
+
+    function showEnding(type) {
+      document.getElementById('player-wrap').style.display = 'none';
+      const screen = document.getElementById('ending-screen');
+      screen.style.display = 'flex';
+      screen.style.animation = 'fadeIn 1.2s ease both';
+
+      if (type === 'bad') {
+        document.getElementById('end-eyebrow').textContent = 'And the loop continues.';
+        document.getElementById('end-headline').innerHTML  =
+          'We trade hours of our lives chasing a version of ourselves that doesnt exist yet—<em> and miss the life thats already waiting.</em>';
+        document.getElementById('end-body').textContent    =
+          'She spent 3 hours getting ready for something she talked herself out of.';
+      } else {
+        document.getElementById('end-eyebrow').textContent = 'She broke the loop.';
+        document.getElementById('end-headline').innerHTML  =
+          'There is no perfect version of you one more video away.<em> There\'s only the version that shows up.</em>';
+        document.getElementById('end-body').textContent    =
+          'We\'re told there\'s always something to fix — a better routine, a better look, a better self. But the only version of you that ever actually lived was the one who walked out the door.';
+      }
+    }
+
+    function restartFilm() {
+      document.getElementById('ending-screen').style.display = 'none';
+      document.getElementById('player-wrap').style.display = 'flex';
+      loadSegment('A');
+    }
+
+  </script>
+</body>
+</html>
